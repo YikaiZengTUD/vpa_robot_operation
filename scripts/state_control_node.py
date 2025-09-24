@@ -167,7 +167,7 @@ class StateControlNode:
             rospy.loginfo("%s: [STATE] Ending tag detected. Stopping robot.", self.robot_name)
             self.local_brake_pub.publish(Bool(data=True))
             return
-        elif self.detected_tag_id == 320:
+        elif self.detected_tag_id == 332:
             # this is starting tag
             rospy.loginfo("%s: [STATE] Starting tag detected. Requesting new task.", self.robot_name)
             resp = self.assign_task_srv(self.robot_name)
