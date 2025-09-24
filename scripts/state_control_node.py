@@ -131,6 +131,8 @@ class StateControlNode:
                             self.task_state = State.IDLE
                             return []
                         return self.get_destination(start_id) # recursive call to get exit path
+                else:
+                    return [self.task_set.loop_path[idx + 1]]
         elif self.task_state == State.EXIT:
             if start_id in self.task_set.exit_path:
                 idx = self.task_set.exit_path.index(start_id)
