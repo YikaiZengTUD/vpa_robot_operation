@@ -18,10 +18,7 @@ class TaskSet():
         self.loop_path = []
         self.exit_path = []
         self.loop_counter = 0
-        if self.loop_counter == 0:
-            self.always_repeat = True
-        else:
-            self.always_repeat = False
+        self.always_repeat = False
 
 class State(IntEnum):
     IDLE  = 0
@@ -118,21 +115,31 @@ class StateControlNode:
                 idx = self.task_set.loop_path.index(start_id)
                 if idx == len(self.task_set.loop_path) - 1:
                     # this is the last tag in loop path
-                    if self.task_set.loop_counter > 1 or self.task_set.always_repeat:
-                        self.task_set.loop_counter -= 1
-                        rospy.loginfo("%s: [STATE] Loop continue", self.robot_name)
-                        return [self.task_set.loop_path[0]] # go back to the first tag in loop path
+                    if self.task_set.always_repeat:
+                        if idx == len(self.task_set.loop_path) - 1:
+                            rospy.loginfo("%s: [STATE] Loop continue (always repeat).", self.robot_name)
+                            return [self.task_set.loop_path[0]] # go back to the first tag in loop path
+                        else:
+                            return [self.task_set.loop_path[idx + 1]]
                     else:
-                        # no more loop, switch to exit state
-                        self.task_state = State.EXIT
-                        rospy.loginfo("%s: [STATE] Loop path completed. Switching to EXIT state.", self.robot_name)
-                        if len(self.task_set.exit_path) == 0:
-                            rospy.logwarn("%s: [STATE] Exit path is empty. Switching to IDLE state.", self.robot_name)
-                            self.task_state = State.IDLE
-                            return []
-                        return self.get_destination(start_id) # recursive call to get exit path
+                        if idx == len(self.task_set.loop_path) - 1:
+                            self.task_set.loop_counter -= 1
+                            rospy.loginfo("%s: [STATE] Loop continue. Remaining loops: %d", self.robot_name, self.task_set.loop_counter)
+                            if idx == len(self.task_set.loop_path) - 1:
+                                if self.task_set.loop_counter == 0:
+                                    # no more loop, switch to exit state
+                                    self.task_state = State.EXIT
+                                    rospy.loginfo("%s: [STATE] Loop path completed. Switching to EXIT state.", self.robot_name)
+                                    if len(self.task_set.exit_path) == 0:
+                                        rospy.logwarn("%s: [STATE] Exit path is empty. Switching to IDLE state.", self.robot_name)
+                                        self.task_state = State.IDLE
+                                        return []
+                                    return [self.task_set.exit_path[1]]
+                                else:
+                                    return [self.task_set.loop_path[0]] # go back to the first tag in loop path
                 else:
                     return [self.task_set.loop_path[idx + 1]]
+
         elif self.task_state == State.EXIT:
             if start_id in self.task_set.exit_path:
                 idx = self.task_set.exit_path.index(start_id)
@@ -173,6 +180,8 @@ class StateControlNode:
             self.task_set.loop_path = resp.loop_path
             self.task_set.exit_path = resp.exit_path
             self.task_set.loop_counter = resp.loop_count
+            if self.task_set.loop_counter == 0:
+                self.task_set.always_repeat = True
             self.task_state = State.ENTRY
             rospy.loginfo("%s: [STATE] New task received: Entry: %s, Loop: %s x%d, Exit: %s", self.robot_name, self.task_set.entry_path, self.task_set.loop_path, self.task_set.loop_counter, self.task_set.exit_path)
 
