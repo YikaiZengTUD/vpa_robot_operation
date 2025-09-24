@@ -76,8 +76,8 @@ class StateControlNode:
         rospy.loginfo("%s: [STATE] Initial green phases received.", self.robot_name)
         self.signal_sub = rospy.Subscriber('/green_phases', Int32MultiArray, self.signal_callback)
 
-        rospy.wait_for_service('center_manager/assign_task', timeout=5)
-        self.assign_task_srv = rospy.ServiceProxy('center_manager/assign_task', AssignTask, persistent=True)
+        rospy.wait_for_service('/center_manager/assign_task', timeout=5)
+        self.assign_task_srv = rospy.ServiceProxy('/center_manager/assign_task', AssignTask, persistent=True)
         rospy.loginfo("%s: [STATE] Connected to assign_task service.", self.robot_name)
         self.task_state = State.IDLE
         self.task_set = TaskSet()
