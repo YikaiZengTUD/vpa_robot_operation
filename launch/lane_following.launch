@@ -1,0 +1,26 @@
+<launch>
+    <arg name="kp" default="0.025"/>
+    <arg name="ki" default="0.0"/>
+    <arg name="kd" default="0.02"/>
+    <arg name="publish_image" default="false"/>
+    <arg name="robot_name" value="$(env robot_name)"/>
+    <arg name="publish_tag_debug" default="false"/>
+     <group ns="$(arg robot_name)">
+        <!-- <include file="$(find vpa_robot_interface)/launch/vpa_camera.launch"/> -->
+        <include file="$(find vpa_robot_perception)/launch/vpa_camera_exposureadjust.launch"/>
+        <include file="$(find vpa_robot_interface)/launch/vpa_traction_start.launch"/>
+        <include file="$(find vpa_robot_perception)/launch/vpa_lane_operation.launch">
+            <arg name="publish_result" value="$(arg publish_image)"/>
+            <arg name="tag_debug" value="$(arg publish_tag_debug)"/>
+        </include>
+        <node pkg="vpa_robot_operation" type="lane_following_legacymethod_node.py" name="lane_following" output="screen">
+            <param name="kp" value="$(arg kp)"/>
+            <param name="ki" value="$(arg ki)"/>
+            <param name="kd" value="$(arg kd)"/>
+         </node>
+        <node pkg="vpa_robot_operation" type="state_control_node.py" name="state_controller" output="screen"/>
+      <group if="$(arg publish_image)">
+         <node pkg="image_transport" type="republish" name="result_image_compressed" output="screen" args="raw in:=result_image compressed out:=result_image/compressed"/>
+      </group>
+     </group>
+</launch>

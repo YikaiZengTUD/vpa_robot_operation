@@ -1,0 +1,8 @@
+# Request
+string robot_id
+---
+# Response
+int32[] entry_path
+int32[] loop_path
+int32   loop_count 
+int32[] exit_path 

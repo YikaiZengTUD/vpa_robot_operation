@@ -1,0 +1,9 @@
+<launch>
+    <arg name="robot_name" value="$(env robot_name)"/>
+     <group ns="$(arg robot_name)">
+       <include file="$(find vpa_robot_interface)/launch/vpa_dead_reckon_start.launch"/>
+       <node pkg="vpa_robot_operation" type="traj_follow_node.py" name="traj_follow_node" output="screen">
+       </node>
+       <include file="$(find vpa_robot_perception)/launch/vpa_acc.launch"/>
+    </group>
+</launch>
