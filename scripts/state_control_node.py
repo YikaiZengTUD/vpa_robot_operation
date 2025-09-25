@@ -246,6 +246,8 @@ class StateControlNode:
             self.speed_factor = 1.0 # do nothing
         else:
             self.speed_factor = acc_controller(dis_ref=0.5,dis_meas=self.lead_car_distance)
+            if self.speed_factor < 0.1:
+                self.speed_factor = 0 # do not go too slow
 
 
     def timer_callback(self, event):
