@@ -81,6 +81,8 @@ class TrajFollowingNode:
         theta_tol   = 15.0 * pi/180  # done when |theta_err| < 15°
         wheel_base  = 0.10          # DB19 wheelbase (m)
         a_max       = 0.5           # braking accel (m/s^2)
+        Ld_max      = 0.35          # max lookahead (m)
+        Ld_min      = 0.20          # min lookahead (m)
 
         # keep filter state
         if not hasattr(self, 'prev_w'):
@@ -123,7 +125,7 @@ class TrajFollowingNode:
         v_cmd = min(v_cmd, sqrt(max(0.0, 2.0 * a_max * (distance - stop_enter))))
 
         # bounded curvature via lookahead
-        Ld = min(max(distance, 0.20), 0.50)     # 20–50 cm lookahead
+        Ld = min(max(distance, Ld_min), Ld_max)     # 20–50 cm lookahead
         kappa = 2.0 * sin(angle_err) / Ld
         w_des = v_cmd * kappa + K_ang * angle_err
 
