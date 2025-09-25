@@ -115,6 +115,13 @@ class LaneFollowingNode:
                 self.left_lane_x = self.last_left
                 self.right_lane_x = self.last_right
 
+        else:
+            left_delta = abs(self.left_lane_x - self.last_left)
+            if left_delta > 70:
+                # this is a very sharp change, use last
+                self.left_lane_x = self.last_left
+                # do nothing on right for now
+
         # Calculate error as the difference between lane center and image center
         lane_center_x = (self.left_lane_x + self.right_lane_x) / 2
         if self.last_center_x is None:
