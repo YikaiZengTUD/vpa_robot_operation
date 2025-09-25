@@ -74,9 +74,9 @@ class TrajFollowingNode:
         v_min_move  = 0.08          # minimum to overcome deadband (only when facing forward)
         stop_enter  = 0.05          # stop radius (m)
         near_scale  = 0.10          # start tapering v within this range (m)
-        K_ang       = 0.5           # small P on heading
-        w_max       = 2.0           # absolute cap on yaw rate (rad/s)
-        alpha_w     = 0.3           # 0..1; higher = snappier ω
+        K_ang       = 0.8           # small P on heading
+        w_max       = 2.5           # absolute cap on yaw rate (rad/s)
+        alpha_w     = 0.55           # 0..1; higher = snappier ω
         theta_goal  = theta_ref     # desired final heading (rad)
         theta_tol   = 15.0 * pi/180  # done when |theta_err| < 15°
         wheel_base  = 0.10          # DB19 wheelbase (m)
