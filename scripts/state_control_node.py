@@ -47,14 +47,17 @@ class StateControlNode:
         self.lead_car_distance = 1.5 # meters
         self.speed_factor = 1
         self.car_front_sub = rospy.Subscriber('perception/lead_car_distance', Float32, self.lead_car_distance_callback)
-        self.detected_tag_id = rospy.Subscriber('perception/detected_tag_id', Int32, self.detected_tag_callback)
+        self.detected_tag_id_sub = rospy.Subscriber('perception/detected_tag_id', Int32, self.detected_tag_callback)
 
         rospy.Subscriber('perception/near_stop_line', Bool, self.near_stop_callback)
         self.odom_reset_cmd = False
         self.traj_finished = False
 
         self.debug_pause = False
-    
+
+        self.detected_tag_id = None
+        self.last_detected_tag_id = None
+
         self.local_brake_pub = rospy.Publisher('local_brake', Bool, queue_size=1)
 
         rospy.Subscriber('cur_traj_finished', Bool, self.cur_traj_finished_callback)
@@ -161,6 +164,10 @@ class StateControlNode:
 
     def detected_tag_callback(self, msg):
         self.detected_tag_id = msg.data
+        if self.detected_tag_id == self.last_detected_tag_id:
+            # it is not a new tag
+            return
+        self.last_detected_tag_id = self.detected_tag_id
         rospy.loginfo("%s: [STATE] Detected tag ID: %d", self.robot_name, self.detected_tag_id)
         if self.detected_tag_id == 331:
             # this is ending tag
