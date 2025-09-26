@@ -80,6 +80,11 @@ map_id = {
     (330, 331): [(1.1,0,0)]
 
 }
+try:
+    from fine_tuning_map import find_tuning_traj
+except ImportError:
+    print("No fine tuning map found, use default")
+    find_tuning_traj = {}
 
 phase_group = {
     0: [332], # entry, this is the virtual signal for entry, so the entering car does not hit the car on main lane
@@ -91,6 +96,8 @@ phase_group = {
 }
 
 def get_trajectory(start_id, end_id):
+    if (start_id, end_id) in find_tuning_traj.keys():
+        return find_tuning_traj[(start_id, end_id)]
     return map_id.get((start_id, end_id), [])
 
 def possible_goals(start_id):
