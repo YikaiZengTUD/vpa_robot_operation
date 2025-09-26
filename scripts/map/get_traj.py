@@ -81,7 +81,8 @@ map_id = {
 
 }
 try:
-    from fine_tuning_map import find_tuning_traj
+    from map.fine_tuning_map import find_tuning_traj
+    print("Fine tuning map found and loaded")
 except ImportError:
     print("No fine tuning map found, use default")
     find_tuning_traj = {}
