@@ -102,7 +102,7 @@ class LaneFollowingNode:
         self.last_left = self.left_lane_x
         self.last_right = self.right_lane_x
 
-        if abs(self.left_lane_x - self.right_lane_x) < 60:
+        if abs(self.left_lane_x - self.right_lane_x) < 85:
             # too close
             right_delta = abs(self.right_lane_x - self.last_right)
             left_delta = abs(self.left_lane_x - self.last_left)
