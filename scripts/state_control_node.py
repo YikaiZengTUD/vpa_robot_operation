@@ -82,6 +82,10 @@ class StateControlNode:
         self.task_state = State.IDLE
         self.task_set = TaskSet()
 
+        self.just_exit_inter = False
+        self.just_exit_inter_counter = 0
+        self.latch_after_exit_inter_threshold = 15 # roughly 1.5 seconds
+
         rospy.Timer(rospy.Duration(0.1), self.timer_callback)
 
     def pose_callback(self, msg):
@@ -218,6 +222,8 @@ class StateControlNode:
 
     def near_stop_callback(self, msg):
         _is_near = msg.data
+        if self.just_exit_inter:
+            _is_near = False
         if _is_near and not self.near_stop:
             self.near_stop = True
             self.near_stop_latch = True
@@ -228,6 +234,12 @@ class StateControlNode:
         self.traj_finished = msg.data
         if self.traj_finished:
             rospy.loginfo("%s: [STATE] Trajectory finished. Resuming lane following.", self.robot_name)
+            # this is a signal that we have finished a trajectory
+            # we ignore near stop line for 1-2 seconds
+
+            self.just_exit_inter = True
+            self.just_exit_inter_counter = 0
+
             self.near_stop = False
             self.pause_cmd = False
             self.is_pose_updated = False
@@ -275,6 +287,11 @@ class StateControlNode:
                 factored_spd_cmd.angular.z = self.speed_factor * self.cmd_lf.angular.z
                 cmd = factored_spd_cmd
 
+        if self.just_exit_inter:
+            self.just_exit_inter_counter += 1
+            if self.just_exit_inter_counter >= self.latch_after_exit_inter_threshold:
+                self.just_exit_inter = False
+                self.just_exit_inter_counter = 0
         # for now, stop the robot if near stop is true
         self.cmd_pub.publish(cmd)
     
