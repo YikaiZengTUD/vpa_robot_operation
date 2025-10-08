@@ -48,7 +48,9 @@ class StateControlNode:
         self.speed_factor = 1
         self.car_front_sub = rospy.Subscriber('perception/lead_car_distance', Float32, self.lead_car_distance_callback)
         self.detected_tag_id_sub = rospy.Subscriber('perception/detected_tag_id', Int32, self.detected_tag_callback)
-
+        self.just_exit_inter = False
+        self.just_exit_inter_counter = 0
+        self.latch_after_exit_inter_threshold = 15 # roughly 1.5 seconds
         rospy.Subscriber('perception/near_stop_line', Bool, self.near_stop_callback)
         self.odom_reset_cmd = False
         self.traj_finished = False
@@ -82,9 +84,7 @@ class StateControlNode:
         self.task_state = State.IDLE
         self.task_set = TaskSet()
 
-        self.just_exit_inter = False
-        self.just_exit_inter_counter = 0
-        self.latch_after_exit_inter_threshold = 15 # roughly 1.5 seconds
+
 
         rospy.Timer(rospy.Duration(0.1), self.timer_callback)
 
