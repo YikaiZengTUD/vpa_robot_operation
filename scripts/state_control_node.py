@@ -177,6 +177,9 @@ class StateControlNode:
             # this is ending tag
             rospy.loginfo("%s: [STATE] Ending tag detected. Stopping robot.", self.robot_name)
             self.local_brake_pub.publish(Bool(data=True))
+
+            self.reset_all_state_to_init()
+            
             return
         elif self.detected_tag_id == 332:
             # this is starting tag
@@ -261,6 +264,31 @@ class StateControlNode:
             if self.speed_factor < 0.1:
                 self.speed_factor = 0 # do not go too slow
 
+    def reset_all_state_to_init(self):
+        self.cmd_lf = Twist()
+        self.cmd_tf = Twist()
+        self.near_stop = False
+        self.pause_cmd = False
+        self.near_stop_latch = False  # latch to indicate we have detected a near stop line
+        self.cmd_tf  = Twist()
+        self.cmd_lf  = Twist()
+        self.lead_car_distance = 1.5 # meters
+        self.speed_factor = 1
+        self.just_exit_inter = False
+        self.just_exit_inter_counter = 0
+        self.detected_tag_id = None
+        self.last_detected_tag_id = None
+        self.debug_pause = False
+        self.local_brake_pub.publish(Bool(data=False))
+        self.traj_finished = False
+        self.is_pose_updated = False
+        self.phase_group = 0 # this is a specific phase group that let the robot entry/exit the track
+        self.inter_clearance = False
+        self.task_state = State.IDLE
+        self.task_set = TaskSet()
+        self.task = []
+        self.odom_reset_pub.publish(Bool(data=True))
+        rospy.loginfo("%s: [STATE] All states reset to initial.", self.robot_name)
 
     def timer_callback(self, event):
         if self.near_stop_latch:
