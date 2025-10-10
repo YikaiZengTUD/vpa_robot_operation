@@ -65,6 +65,11 @@ class TrajFollowingNode:
                         rospy.loginfo(f"{self.robot_name}: Reached waypoint ({x_ref}, {y_ref}, {theta_ref}). Current pose: ({x_meas}, {y_meas}, {theta_meas}).")
                         break
 
+                elif v_cmd < 0.01:
+                    # this is stop for anoher reason, we need to break to avoid infinite loop
+                    rospy.loginfo(f"{self.robot_name}: Stopped before reaching waypoint ({x_ref}, {y_ref}, {theta_ref}). Current pose: ({x_meas}, {y_meas}, {theta_meas}).")
+                    break 
+
                 rate.sleep()
 
         rospy.loginfo(f"{self.robot_name}: Current trajectory completed.")
