@@ -52,6 +52,9 @@ class StateControlNode:
         self.just_exit_inter_counter = 0
         self.latch_after_exit_inter_threshold = 15 # roughly 1.5 seconds
         rospy.Subscriber('perception/near_stop_line', Bool, self.near_stop_callback)
+
+        self.near_car_stop_latch = False
+
         self.odom_reset_cmd = False
         self.traj_finished = False
 
@@ -260,9 +263,20 @@ class StateControlNode:
         if self.lead_car_distance > 0.7:
             self.speed_factor = 1.0 # do nothing
         else:
+            if self.near_car_stop_latch:
+                if self.lead_car_distance > 1.0:
+                    self.near_car_stop_latch = False
+                    rospy.loginfo("%s: [STATE] Lead car gone. Resuming normal operation.", self.robot_name)
+                self.speed_factor = 0
+                return
             self.speed_factor = acc_controller(dis_ref=0.5,dis_meas=self.lead_car_distance)
             if self.speed_factor < 0.1:
                 self.speed_factor = 0 # do not go too slow
+
+                # we need to latch until we are sure the car is gone
+                self.near_car_stop_latch = True
+                rospy.loginfo("%s: [STATE] Lead car too close. Stopping robot.", self.robot_name)
+
 
     def reset_all_state_to_init(self):
         self.cmd_lf = Twist()
