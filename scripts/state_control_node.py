@@ -260,7 +260,7 @@ class StateControlNode:
 
     def lead_car_distance_callback(self, msg):
         self.lead_car_distance = msg.data
-        if self.lead_car_distance > 0.7:
+        if self.lead_car_distance > 0.7 and self.near_car_stop_latch == False:
             self.speed_factor = 1.0 # do nothing
         else:
             if self.near_car_stop_latch:
