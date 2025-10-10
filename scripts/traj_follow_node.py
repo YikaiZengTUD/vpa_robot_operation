@@ -58,9 +58,11 @@ class TrajFollowingNode:
                 self.cmd_pub.publish(cmd)
                 self.cmd_last = cmd
 
-                if distance < 0.05 or v_cmd < 0.01:  # 5 cm tolerance to switch to next point
-                    rospy.loginfo(f"{self.robot_name}: Reached waypoint ({x_ref}, {y_ref}, {theta_ref}). Current pose: ({x_meas}, {y_meas}, {theta_meas}).")
-                    break
+                if distance < 0.05:  # 5 cm tolerance to switch to next point
+                    theta_err = atan2(sin(theta_ref - theta_meas), cos(theta_ref - theta_meas))
+                    if abs(theta_err) <= 15*pi/180:
+                        rospy.loginfo(f"{self.robot_name}: Reached waypoint ({x_ref}, {y_ref}, {theta_ref}). Current pose: ({x_meas}, {y_meas}, {theta_meas}).")
+                        break
 
                 rate.sleep()
 
