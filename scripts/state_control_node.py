@@ -293,7 +293,7 @@ class StateControlNode:
         self.detected_tag_id = None
         self.last_detected_tag_id = None
         self.debug_pause = False
-        self.local_brake_pub.publish(Bool(data=False))
+
         self.traj_finished = False
         self.is_pose_updated = False
         self.phase_group = 0 # this is a specific phase group that let the robot entry/exit the track
@@ -301,7 +301,7 @@ class StateControlNode:
         self.task_state = State.IDLE
         self.task_set = TaskSet()
         self.task = []
-        self.odom_reset_pub.publish(Bool(data=True))
+        self.odom_reset_pub.publish(Bool(data=False)) # this is the correct reset state
         rospy.loginfo("%s: [STATE] All states reset to initial.", self.robot_name)
 
     def timer_callback(self, event):
