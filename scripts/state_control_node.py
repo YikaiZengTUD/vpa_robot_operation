@@ -58,7 +58,7 @@ class StateControlNode:
         self.odom_reset_cmd = False
         self.traj_finished = False
 
-        self.debug_pause = False
+        self.debug_pause = False # not in use
 
         self.detected_tag_id = None
         self.last_detected_tag_id = None
@@ -87,7 +87,7 @@ class StateControlNode:
         self.task_state = State.IDLE
         self.task_set = TaskSet()
 
-
+        self.no_pose_update_timeout = 50 # roughly 5 seconds
 
         rospy.Timer(rospy.Duration(0.1), self.timer_callback)
 
@@ -306,13 +306,25 @@ class StateControlNode:
 
     def timer_callback(self, event):
         if self.near_stop_latch:
+            # if we are in this and we did not get pose updated for a while (5s), we miss the tag, try do a bit more
+            # lane following unless we are stopped by lead car
+            if not self.is_pose_updated and self.speed_factor > 0.1:
+                self.no_pose_update_timeout -= 1
+                if self.no_pose_update_timeout <= 0:
+                    rospy.logwarn("%s: [STATE] No pose update for a while. Assuming missed tag. Resuming lane following.", self.robot_name)
+                    self.near_stop_latch = False
+                    self.near_stop = False
+                    self.near_car_stop_latch = False
+                    self.pause_cmd = False
+                    self.no_pose_update_timeout = 50
+                    
             if not self.pause_cmd:
                 rospy.loginfo("%s: [STATE] Near stop line detected. Pausing robot.", self.robot_name)
                 self.pause_cmd = True
                 cmd = Twist()  # stop command
                 self.traj_finished = False
             else:
-                if self.inter_clearance:
+                if self.inter_clearance: 
                     # this we can go because of green signal
                     factored_spd_cmd = Twist()
                     factored_spd_cmd.linear.x = self.speed_factor * self.cmd_tf.linear.x
