@@ -22,6 +22,8 @@ class TrajFollowingNode:
         self.end_id     = None
         self.traj       = []
 
+        self.log_when_err = []
+
         rospy.Subscriber('start_end_id', Int32MultiArray, self.start_end_id_callback)
         rospy.loginfo(f"{self.robot_name} Traj Following Node Initialized")
         self.status_pub = rospy.Publisher('cur_traj_finished', Bool, queue_size=1)
@@ -35,6 +37,10 @@ class TrajFollowingNode:
         self.end_id   = msg.data[1]
         self.current_pose = Pose2D()  # reset current pose
         self.traj = get_trajectory(self.start_id, self.end_id)
+        pose_dd = rospy.wait_for_message('dead_reckoned_pose', Pose2D, timeout=1.0)
+        self.current_pose = pose_dd  # get the latest pose
+        self.log_when_err = [self.current_pose.x, self.current_pose.y, self.current_pose.theta,0,0]
+        
         rospy.loginfo(f"{self.robot_name}: [TRAJ] Received new trajectory from {self.start_id} to {self.end_id} with {len(self.traj)} points.")
 
         self.follow_trajectory()
@@ -51,7 +57,7 @@ class TrajFollowingNode:
                 theta_meas = self.current_pose.theta
 
                 v_cmd, w_cmd, distance = self.compute_twist(x_meas, y_meas, theta_meas, x_ref, y_ref, theta_ref)
-
+                self.log_when_err.append([x_meas,y_meas,theta_meas,v_cmd,w_cmd])
                 cmd = Twist()
                 cmd.linear.x = v_cmd
                 cmd.angular.z = w_cmd
@@ -68,6 +74,7 @@ class TrajFollowingNode:
                 elif v_cmd < 0.01:
                     # this is stop for anoher reason, we need to break to avoid infinite loop
                     rospy.loginfo(f"{self.robot_name}: Stopped before reaching waypoint ({x_ref}, {y_ref}, {theta_ref}). Current pose: ({x_meas}, {y_meas}, {theta_meas}).")
+                    print(self.log_when_err)
                     break 
 
                 rate.sleep()
