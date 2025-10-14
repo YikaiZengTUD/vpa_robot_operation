@@ -269,7 +269,7 @@ class StateControlNode:
                     rospy.loginfo("%s: [STATE] Lead car gone. Resuming normal operation.", self.robot_name)
                 self.speed_factor = 0
                 return
-            self.speed_factor = acc_controller(dis_ref=0.5,dis_meas=self.lead_car_distance)
+            self.speed_factor = acc_controller(dis_ref=0.2,dis_meas=self.lead_car_distance)
             if self.speed_factor < 0.1:
                 self.speed_factor = 0 # do not go too slow
 
