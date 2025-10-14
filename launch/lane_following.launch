@@ -1,5 +1,5 @@
 <launch>
-    <arg name="kp" default="0.025"/>
+    <arg name="kp" default="0.02"/>
     <arg name="ki" default="0.0"/>
     <arg name="kd" default="0.02"/>
     <arg name="publish_image" default="false"/>
