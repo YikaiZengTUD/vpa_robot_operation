@@ -25,7 +25,7 @@ class LaneFollowingNode:
         
         rospy.Subscriber('perception/lane_info', Int32MultiArray, self.lane_callback)
 
-        self.kp = rospy.get_param('~kp', 0.025)
+        self.kp = rospy.get_param('~kp', 0.02)
         self.ki = rospy.get_param('~ki', 0.0)
         self.kd = rospy.get_param('~kd', 0.02)
         self.pid_controller = PIDController(kp=self.kp, ki=self.ki, kd=self.kd, output_limits=(-2.0, 2.0))
