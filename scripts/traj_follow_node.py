@@ -39,7 +39,7 @@ class TrajFollowingNode:
         self.traj = get_trajectory(self.start_id, self.end_id)
         pose_dd = rospy.wait_for_message('dead_reckoned_pose', Pose2D, timeout=1.0)
         self.current_pose = pose_dd  # get the latest pose
-        self.log_when_err = [self.current_pose.x, self.current_pose.y, self.current_pose.theta,0,0]
+        self.log_when_err = [(self.current_pose.x, self.current_pose.y, self.current_pose.theta,0,0)]
         
         rospy.loginfo(f"{self.robot_name}: [TRAJ] Received new trajectory from {self.start_id} to {self.end_id} with {len(self.traj)} points.")
 
@@ -57,7 +57,7 @@ class TrajFollowingNode:
                 theta_meas = self.current_pose.theta
 
                 v_cmd, w_cmd, distance = self.compute_twist(x_meas, y_meas, theta_meas, x_ref, y_ref, theta_ref)
-                self.log_when_err.append([x_meas,y_meas,theta_meas,v_cmd,w_cmd])
+                self.log_when_err.append((x_meas,y_meas,theta_meas,v_cmd,w_cmd))
                 cmd = Twist()
                 cmd.linear.x = v_cmd
                 cmd.angular.z = w_cmd
