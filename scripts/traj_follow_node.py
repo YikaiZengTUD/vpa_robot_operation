@@ -91,7 +91,7 @@ class TrajFollowingNode:
         near_scale  = 0.10          # start tapering v within this range (m)
         K_ang       = 0.8           # small P on heading
         w_max       = 2.5           # absolute cap on yaw rate (rad/s)
-        alpha_w     = 0.55           # 0..1; higher = snappier ω
+        alpha_w     = 0.55          # 0..1; higher = snappier ω
         theta_goal  = theta_ref     # desired final heading (rad)
         theta_tol   = 15.0 * pi/180  # done when |theta_err| < 15°
         wheel_base  = 0.10          # DB19 wheelbase (m)
@@ -132,7 +132,12 @@ class TrajFollowingNode:
         taper = min(1.0, distance / max(near_scale, 1e-6))
         v_cmd = vf_ref * taper * max(0.0, c)
         if distance < 0.05 or c < 0.2:
-            v_cmd = 0.0
+            if c < 0.2 and distance > 0.25:
+                # in this case we want to stop
+                rospy.loginfo_throttle(1.0, f'Facing away from target (cos={c:.2f}), rotating in place')
+                v_cmd = 0.1 # try correct
+            else:
+                v_cmd = 0
         else:
             v_cmd = max(v_min_move, v_cmd)
 
