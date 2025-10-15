@@ -134,8 +134,14 @@ class TrajFollowingNode:
         if distance < 0.05 or c < 0.2:
             if c < 0.2 and distance > 0.25:
                 # in this case we want to stop
-                rospy.loginfo_throttle(1.0, f'Facing away from target (cos={c:.2f}), rotating in place')
-                v_cmd = 0.1 # try correct
+                rospy.logwarn_throttle(1.0, f'Facing away from target (cos={c:.2f}), rotating in place')
+                v_cmd = 0.08 # try correct
+                if angle_err < 0:
+                    w_cmd = -1.8
+                else:
+                    w_cmd = 1.8
+                self.prev_w = w_cmd
+                return v_cmd, w_cmd, distance
             else:
                 v_cmd = 0
         else:
