@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find vpa_robot_operation)/launch/lane_following.launch"/>
+    <include file="$(find vpa_robot_operation)/launch/inter_operation.launch"/>
+</launch>
