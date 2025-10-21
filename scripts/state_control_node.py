@@ -40,6 +40,8 @@ class StateControlNode:
         self.near_stop_latch = False  # latch to indicate we have detected a near stop line
         self.cmd_tf  = Twist()
         self.cmd_lf  = Twist()
+
+        self.ignore_stop_lines = rospy.get_param('~ignore_stop_lines', False)
         rospy.Subscriber('cmd_vel_lf', Twist, self.cmd_callback_lf)
         rospy.Subscriber('cmd_vel_tf', Twist, self.cmd_callback_tf)
         self.task = []  # [start_tag_id, end_tag_id]
@@ -305,6 +307,9 @@ class StateControlNode:
         rospy.loginfo("%s: [STATE] All states reset to initial.", self.robot_name)
 
     def timer_callback(self, event):
+        if self.ignore_stop_lines:
+            self.near_stop = False
+            self.near_stop_latch = False
         if self.near_stop_latch:
             # if we are in this and we did not get pose updated for a while (5s), we miss the tag, try do a bit more
             # lane following unless we are stopped by lead car

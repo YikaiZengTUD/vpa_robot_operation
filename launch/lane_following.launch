@@ -5,6 +5,7 @@
     <arg name="publish_image" default="false"/>
     <arg name="robot_name" value="$(env robot_name)"/>
     <arg name="publish_tag_debug" default="false"/>
+    <arg name="ignore_stop_lines" default="false"/>
      <group ns="$(arg robot_name)">
         <!-- <include file="$(find vpa_robot_interface)/launch/vpa_camera.launch"/> -->
         <include file="$(find vpa_robot_perception)/launch/vpa_camera_exposureadjust.launch"/>
@@ -18,7 +19,9 @@
             <param name="ki" value="$(arg ki)"/>
             <param name="kd" value="$(arg kd)"/>
          </node>
-        <node pkg="vpa_robot_operation" type="state_control_node.py" name="state_controller" output="screen"/>
+        <node pkg="vpa_robot_operation" type="state_control_node.py" name="state_controller" output="screen">
+            <param name="ignore_stop_lines" value="$(arg ignore_stop_lines)"/>
+         </node>
       <group if="$(arg publish_image)">
          <node pkg="image_transport" type="republish" name="result_image_compressed" output="screen" args="raw in:=result_image compressed out:=result_image/compressed"/>
       </group>
