@@ -10,6 +10,10 @@ from map.get_traj import get_trajectory
 import numpy as np
 from math import atan2, sin, cos, sqrt, pi
 
+skip_id = {(318, 333),(333, 312),(312, 316),(316,330),(330,318)} 
+# these are short distance that we dont need to follow trajectory
+# just resume lane following
+
 class TrajFollowingNode:
     def __init__(self):
         self.robot_name = socket.gethostname()
@@ -43,6 +47,10 @@ class TrajFollowingNode:
         
         rospy.loginfo(f"{self.robot_name}: [TRAJ] Received new trajectory from {self.start_id} to {self.end_id} with {len(self.traj)} points.")
 
+        if (self.start_id, self.end_id) in skip_id:
+            rospy.loginfo(f"{self.robot_name}: [TRAJ] Skipping trajectory following for short distance from {self.start_id} to {self.end_id}.")
+            self.status_pub.publish(Bool(data=True))
+            return
         self.follow_trajectory()
 
     def follow_trajectory(self):
