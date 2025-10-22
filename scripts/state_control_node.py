@@ -42,8 +42,8 @@ class StateControlNode:
         self.cmd_lf  = Twist()
 
         self.ignore_stop_lines = rospy.get_param('~ignore_stop_lines', False)
-        rospy.Subscriber('cmd_vel_lf', Twist, self.cmd_callback_lf)
-        rospy.Subscriber('cmd_vel_tf', Twist, self.cmd_callback_tf)
+        rospy.Subscriber('cmd_vel_lf', Twist, self.cmd_callback_lf, queue_size=1)
+        rospy.Subscriber('cmd_vel_tf', Twist, self.cmd_callback_tf, queue_size=1)
         self.task = []  # [start_tag_id, end_tag_id]
 
         self.lead_car_distance = 1.5 # meters
@@ -65,7 +65,7 @@ class StateControlNode:
         self.traj_finished = False
 
         self.debug_pause = False # not in use
-
+        self.cycle_latch = False
         self.detected_tag_id = None
         self.last_detected_tag_id = None
 
@@ -95,11 +95,23 @@ class StateControlNode:
 
         self.no_pose_update_timeout = 50 # roughly 5 seconds
 
+        self.cycle_latch = False
+        self.local_brake_status = True
+        self.local_brake_sub = rospy.Subscriber('local_brake', Bool, self.local_brake_callback)
         rospy.Timer(rospy.Duration(0.1), self.timer_callback)
 
     def tag_fail_callback(self, msg):
         self.fail_tag_detection = msg.data
-        
+
+    def local_brake_callback(self, msg):
+        if self.local_brake_status == True and msg.data == False:
+            # just released brake
+            if self.cycle_latch:
+                # we should now let go
+                self.cycle_latch = False
+                rospy.loginfo("%s: [STATE] Local brake released. Resuming operation.", self.robot_name)
+        self.local_brake_status = msg.data
+
     def pose_callback(self, msg):
         if not self.is_pose_updated:
             rospy.loginfo("%s: [STATE] Start Pose Updated", self.robot_name)
@@ -191,7 +203,7 @@ class StateControlNode:
             self.local_brake_pub.publish(Bool(data=True))
 
             self.reset_all_state_to_init()
-            
+            self.cycle_latch = True
             return
         elif self.detected_tag_id == 332:
             # this is starting tag
@@ -234,8 +246,11 @@ class StateControlNode:
     def cmd_callback_tf(self, msg):
         self.cmd_tf = msg
     
-
     def near_stop_callback(self, msg):
+        if self.cycle_latch:
+            self.near_stop = False
+            self.near_stop_latch = False
+            return
         _is_near = msg.data
         if self.just_exit_inter:
             _is_near = False
@@ -319,7 +334,7 @@ class StateControlNode:
         move_cmd.linear.x = 0.1 # m/s
         move_cmd.angular.z = 0.0
         rate = rospy.Rate(10) # 10 Hz
-        for _ in range(5):
+        for _ in range(2):
             self.cmd_pub.publish(move_cmd)
             rate.sleep()
         # stop
@@ -336,8 +351,9 @@ class StateControlNode:
             if not self.is_pose_updated and self.speed_factor > 0.1:
                 self.no_pose_update_timeout -= 1
                 if self.fail_tag_detection:
-                    rospy.logwarn("%s: [STATE] Failed to detect tag. Resuming lane following.", self.robot_name)
+                    rospy.logwarn("%s: [STATE] Failed to detect tag. Trying Move Forward.", self.robot_name)
                     self.move_a_bit() # this may help to detect the tag again
+                    self.near_stop_latch = False
             if not self.pause_cmd:
                 rospy.loginfo("%s: [STATE] Near stop line detected. Pausing robot.", self.robot_name)
                 self.pause_cmd = True
