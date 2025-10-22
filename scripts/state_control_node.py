@@ -229,6 +229,9 @@ class StateControlNode:
                 # we need to check which what is our destination id and then we know which phase group it belongs to 
                 self.next_id = self.task_manager.update_task_state(self.detect_id)
                 self.phase_num = get_phase_group_number(self.detect_id, self.next_id)
+                if self.phase_num is None:
+                    self.traffic_signal_ok = False
+                    rospy.logwarn(f"[StateControlNode] No phase group found for IDs: ({self.detect_id}, {self.next_id}). Assuming red signal.")
                 if self.phase_num in self.green_phases:
                     self.traffic_signal_ok = True
                 else:
