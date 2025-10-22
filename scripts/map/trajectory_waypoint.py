@@ -96,7 +96,7 @@ phase_group = {
     100: [330] # exit, always green for now, we sometimes need to red this so no car hit the entering car
 }
 
-def get_trajectory(start_id, end_id):
+def get_trajectory_waypoints(start_id, end_id):
     if (start_id, end_id) in find_tuning_traj.keys():
         return find_tuning_traj[(start_id, end_id)]
     return map_id.get((start_id, end_id), [])
