@@ -50,6 +50,10 @@ class StateControlNode:
         self.speed_factor = 1
         self.car_front_sub = rospy.Subscriber('perception/lead_car_distance', Float32, self.lead_car_distance_callback)
         self.detected_tag_id_sub = rospy.Subscriber('perception/detected_tag_id', Int32, self.detected_tag_callback)
+        
+        self.fail_tag_detection = False
+        self.tag_fail_sub = rospy.Subscriber('perception/tag_detection_failed', Bool, self.tag_fail_callback)
+        
         self.just_exit_inter = False
         self.just_exit_inter_counter = 0
         self.latch_after_exit_inter_threshold = 15 # roughly 1.5 seconds
@@ -93,6 +97,9 @@ class StateControlNode:
 
         rospy.Timer(rospy.Duration(0.1), self.timer_callback)
 
+    def tag_fail_callback(self, msg):
+        self.fail_tag_detection = msg.data
+        
     def pose_callback(self, msg):
         if not self.is_pose_updated:
             rospy.loginfo("%s: [STATE] Start Pose Updated", self.robot_name)
@@ -306,6 +313,19 @@ class StateControlNode:
         self.odom_reset_pub.publish(Bool(data=False)) # this is the correct reset state
         rospy.loginfo("%s: [STATE] All states reset to initial.", self.robot_name)
 
+    def move_a_bit(self):
+        # move a bit forward for 0.5 seconds
+        move_cmd = Twist()
+        move_cmd.linear.x = 0.1 # m/s
+        move_cmd.angular.z = 0.0
+        rate = rospy.Rate(10) # 10 Hz
+        for _ in range(5):
+            self.cmd_pub.publish(move_cmd)
+            rate.sleep()
+        # stop
+        stop_cmd = Twist()
+        self.cmd_pub.publish(stop_cmd)
+
     def timer_callback(self, event):
         if self.ignore_stop_lines:
             self.near_stop = False
@@ -315,14 +335,9 @@ class StateControlNode:
             # lane following unless we are stopped by lead car
             if not self.is_pose_updated and self.speed_factor > 0.1:
                 self.no_pose_update_timeout -= 1
-                if self.no_pose_update_timeout <= 0:
-                    rospy.logwarn("%s: [STATE] No pose update for a while. Assuming missed tag. Resuming lane following.", self.robot_name)
-                    self.near_stop_latch = False
-                    self.near_stop = False
-                    self.near_car_stop_latch = False
-                    self.pause_cmd = False
-                    self.no_pose_update_timeout = 50
-                    
+                if self.fail_tag_detection:
+                    rospy.logwarn("%s: [STATE] Failed to detect tag. Resuming lane following.", self.robot_name)
+                    self.move_a_bit() # this may help to detect the tag again
             if not self.pause_cmd:
                 rospy.loginfo("%s: [STATE] Near stop line detected. Pausing robot.", self.robot_name)
                 self.pause_cmd = True
