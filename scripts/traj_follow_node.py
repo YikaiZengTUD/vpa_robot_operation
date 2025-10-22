@@ -6,7 +6,7 @@ from geometry_msgs.msg import Twist, Pose2D
 import socket
 from std_msgs.msg import Bool, Int32MultiArray
 
-from map.get_traj import get_trajectory
+from map.trajectory_waypoint import get_trajectory_waypoints
 import numpy as np
 from math import atan2, sin, cos, sqrt, pi
 
@@ -43,7 +43,7 @@ class TrajFollowingNode:
         self.start_id = msg.data[0]
         self.end_id   = msg.data[1]
         self.current_pose = Pose2D()  # reset current pose
-        self.traj = get_trajectory(self.start_id, self.end_id)
+        self.traj = get_trajectory_waypoints(self.start_id, self.end_id)
         pose_dd = rospy.wait_for_message('dead_reckoned_pose', Pose2D, timeout=1.0)
         self.current_pose = pose_dd  # get the latest pose
         self.log_when_err = [(self.current_pose.x, self.current_pose.y, self.current_pose.theta,0,0)]
