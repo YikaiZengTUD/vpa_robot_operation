@@ -27,11 +27,14 @@ class TrajFollowingNode:
         self.traj       = []
 
         self.log_when_err = []
-
+        self.true_cmd = Twist()
+        self.true_cmd_sub = rospy.Subscriber('cmd_vel', Twist, self.true_cmd_callback)
         rospy.Subscriber('start_end_id', Int32MultiArray, self.start_end_id_callback)
         rospy.loginfo(f"{self.robot_name} Traj Following Node Initialized")
         self.status_pub = rospy.Publisher('cur_traj_finished', Bool, queue_size=1)
 
+    def true_cmd_callback(self, msg):
+        self.true_cmd = msg
 
     def pose_callback(self, msg):
         self.current_pose = msg
@@ -65,7 +68,8 @@ class TrajFollowingNode:
                 theta_meas = self.current_pose.theta
 
                 v_cmd, w_cmd, distance = self.compute_twist(x_meas, y_meas, theta_meas, x_ref, y_ref, theta_ref)
-                self.log_when_err.append((x_meas,y_meas,theta_meas,v_cmd,w_cmd))
+                true_w_cmd = self.true_cmd.angular.z
+                self.log_when_err.append((x_meas,y_meas,theta_meas,true_w_cmd,w_cmd))
                 cmd = Twist()
                 cmd.linear.x = v_cmd
                 cmd.angular.z = w_cmd
